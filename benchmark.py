@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 
 implementations = {
     "matmul_1": "Naive Kernel",
-    "matmul_2": "Tiled Shared Memory Kernel"
+    "matmul_2": "Tiled Shared Memory Kernel",
+    "matmul_3": "Register Tiled Kernel"
 }
 
 # The N sizes: 2^4 to 2^13 (16 to 8192). 
 # We skip 1, 2, 4, 8 because launch overhead dominates and ruins the GFLOPS metric
-sizes = [2**i for i in range(4, 14)]
+sizes = [2**i for i in range(4, 12)]
 
 plt.figure(figsize=(10, 6))
 
