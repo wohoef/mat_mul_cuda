@@ -22,7 +22,7 @@ for size in sizes:
     times.append(time_ms)
 
 
-# 2. Plot the results
+# 3. Plot the results
 plt.figure(figsize=(10, 6))
 plt.plot(sizes, times, marker='o', linestyle='-', color='b', label='Naive CUDA Kernel')
 
