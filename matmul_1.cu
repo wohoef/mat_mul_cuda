@@ -21,12 +21,14 @@ __global__ void matrixMult(Matrix A, Matrix B, Matrix C) {
 }
 
 int main(int argc, char** argv) {
+    std::cout << sizeof(float) << std::endl;
     int size = std::atoi(argv[1]);
 
     int M = size; // A rows
     int K = size; // A cols and B rows
     int N = size; // B cols
 
+    // Host matrices
     Matrix h_A = {M, K, new float[M * K]};
     Matrix h_B = {K, N, new float[K * N]};
     Matrix h_C = {M, N, new float[M * N]};
@@ -34,6 +36,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < M * K; i++) h_A.data[i] = 1.0f;
     for (int i = 0; i < K * N; i++) h_B.data[i] = 1.0f;
 
+    // Device matrices
     Matrix d_A = {M, K, nullptr};
     Matrix d_B = {K, N, nullptr};
     Matrix d_C = {M, N, nullptr};
@@ -51,6 +54,10 @@ int main(int argc, char** argv) {
         (M + threadsPerBlock.y - 1) / threadsPerBlock.y
     );
 
+    // Warm up run
+    matrixMult<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C);
+
+    // Actual run
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
@@ -58,13 +65,19 @@ int main(int argc, char** argv) {
     cudaEventRecord(start);
     matrixMult<<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C);
     cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
+
+    // Check for errors
+    cudaError_t syncErr = cudaEventSynchronize(stop);
+    if (syncErr != cudaSuccess) {
+        std::cout << "Sync Error: " << cudaGetErrorString(syncErr) << std::endl;
+        return;
+    }
 
     float ms = 0;
     cudaEventElapsedTime(&ms, start, stop);
     std::cout << ms << std::endl;
 
-
+    // Cleanup
     cudaFree(d_A.data);
     cudaFree(d_B.data);
     cudaFree(d_C.data);
