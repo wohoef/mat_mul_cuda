@@ -21,7 +21,6 @@ __global__ void matrixMult(Matrix A, Matrix B, Matrix C) {
 }
 
 int main(int argc, char** argv) {
-    std::cout << sizeof(float) << std::endl;
     int size = std::atoi(argv[1]);
 
     int M = size; // A rows
@@ -70,7 +69,6 @@ int main(int argc, char** argv) {
     cudaError_t syncErr = cudaEventSynchronize(stop);
     if (syncErr != cudaSuccess) {
         std::cout << "Sync Error: " << cudaGetErrorString(syncErr) << std::endl;
-        return;
     }
 
     float ms = 0;

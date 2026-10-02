@@ -13,6 +13,9 @@ __global__ void matrixMult(Matrix A, Matrix B, Matrix C) {
     __shared__ float s_A[TILE_SIZE][TILE_SIZE];
     __shared__ float s_B[TILE_SIZE][TILE_SIZE];
 
+    int tx = threadIdx.x;
+    int ty = threadIdx.y;
+
     int col = blockDim.x * blockIdx.x + threadIdx.x;
     int row = blockDim.y * blockIdx.y + threadIdx.y;
 
@@ -20,7 +23,32 @@ __global__ void matrixMult(Matrix A, Matrix B, Matrix C) {
 
     int numTiles = (A.cols + TILE_SIZE - 1) / TILE_SIZE;
 
-    for (int i = 0)
+    for (int i = 0; i < numTiles; i++) {
+        // Load cell
+        if (row < A.rows && TILE_SIZE * i + tx < A.cols) {
+            s_A[ty][tx] = A.data[row * A.cols + TILE_SIZE * i + tx];
+        } else {
+            s_A[ty][tx] = 0.0f;
+        }
+
+        if (col < B.cols && TILE_SIZE * i + ty < B.rows) {
+            s_B[ty][tx] = B.data[(TILE_SIZE * i + ty) * B.cols + col];
+        } else {
+            s_B[ty][tx] = 0.0f;
+        }
+
+        __syncthreads();
+
+        for (int k = 0; k < TILE_SIZE; k++) {
+            sum += s_A[ty][k] * s_B[k][tx];
+        }
+
+        __syncthreads();
+    }
+
+    if (col < C.cols && row < C.rows) {
+        C.data[row * C.cols + col] = sum;
+    }
 }
 
 int main(int argc, char** argv) {
@@ -72,7 +100,6 @@ int main(int argc, char** argv) {
     cudaError_t syncErr = cudaEventSynchronize(stop);
     if (syncErr != cudaSuccess) {
         std::cout << "Sync Error: " << cudaGetErrorString(syncErr) << std::endl;
-        return
     }
 
     float ms = 0;
