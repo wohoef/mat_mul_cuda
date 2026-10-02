@@ -19,37 +19,30 @@ for exe, label in implementations.items():
     valid_sizes = []
     
     print(f"\nCompiling {source}...")
-    try:
-        subprocess.run(["nvcc", "-arch=native", "-o", exe, source], check=True)
-    except subprocess.CalledProcessError:
-        print(f"Failed to compile {source}, skipping.")
-        continue
+    subprocess.run(["nvcc", "-arch=native", "-o", exe, source], check=True)
 
     print(f"Running benchmarks for {label}...")
     for size in sizes:
             
         print(f"  Testing {size}x{size}...", end="", flush=True)
-        try:
-            result = subprocess.run([f"./{exe}", str(size)], capture_output=True, text=True, check=True)
-            time_ms = float(result.stdout.strip())
-            
-            # Calculate GFLOPS
-            # Total operations = 2 * N^3 (N^3 multiplies + N^3 additions)
-            # GFLOPS = Operations / (Time in seconds * 10^9)
-            operations = 2 * (size ** 3)
-            time_s = time_ms / 1000.0
-            gflops = operations / (time_s * 1e9)
-            
-            gflops_list.append(gflops)
-            valid_sizes.append(size)
-            print(f" {time_ms:.2f} ms | {gflops:.2f} GFLOPS")
-            
-        except subprocess.CalledProcessError:
-            print(f" Crash/Error!")
-            break
+        result = subprocess.run([f"./{exe}", str(size)], capture_output=True, text=True, check=True)
+        time_ms = float(result.stdout.strip())
+        
+        # Calculate GFLOPS
+        # Total operations = 2 * N^3 (N^3 multiplies + N^3 additions)
+        # GFLOPS = Operations / (Time in seconds * 10^9)
+        operations = 2 * (size ** 3)
+        time_s = time_ms / 1000.0
+        gflops = operations / (time_s * 1e9)
+        
+        gflops_list.append(gflops)
+        valid_sizes.append(size)
+        print(f" {time_ms:.2f} ms | {gflops:.2f} GFLOPS")
 
     # Plot GFLOPS (Y) vs Matrix Size (X)
     plt.plot(valid_sizes, gflops_list, marker='o', linestyle='-', label=label)
+
+    subprocess.run(["rm", exe])
 
 # X-axis remains log2 so the sizes spread out evenly
 plt.xscale('log', base=2)
