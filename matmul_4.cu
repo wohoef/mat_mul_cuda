@@ -72,9 +72,13 @@ __global__ void matrixMult(Matrix A, Matrix B, Matrix C) {
     }
 
     for (int i = 0; i < TM; i++) {
-        for (int j = 0; j < TN; j++) {
-            C.data[(row + i) * C.cols + (col + j)] = c[i][j];
-        }
+        float4 tmp_c;
+        tmp_c.x = c[i][0];
+        tmp_c.y = c[i][1];
+        tmp_c.z = c[i][2];
+        tmp_c.w = c[i][3];
+        
+        reinterpret_cast<float4*>(&C.data[(row + i) * C.cols + col])[0] = tmp_c;
     }
 }
 
