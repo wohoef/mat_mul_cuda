@@ -2,6 +2,7 @@ import subprocess
 import matplotlib.pyplot as plt
 
 implementations = {
+    "matmul_0": "cuBLAS",
     "matmul_1": "Naive Kernel",
     "matmul_2": "Tiled Shared Memory Kernel",
     "matmul_3": "Register Tiled Kernel",
@@ -10,7 +11,7 @@ implementations = {
 
 # The N sizes: 2^4 to 2^13 (16 to 8192). 
 # We skip 1, 2, 4, 8 because launch overhead dominates and ruins the GFLOPS metric
-sizes = [2**i for i in range(4, 16)]
+sizes = [2**i for i in range(6, 16)]
 
 plt.figure(figsize=(10, 6))
 
@@ -39,7 +40,7 @@ for exe, label in implementations.items():
         gflops_list.append(gflops)
         valid_sizes.append(size)
         print(f" {time_ms:.2f} ms | {gflops:.2f} GFLOPS")
-        if len(gflops_list) > 2:
+        if len(gflops_list) > 2 and size > 1024:
             if (gflops_list[-1] - gflops_list[-2]) / gflops_list[-2] < 0.05:
                 break
 
