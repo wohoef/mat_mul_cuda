@@ -4,7 +4,7 @@
 
 #define BM 64
 #define BN 64
-#define BK 8
+#define BK 16
 
 #define TM 4
 #define TN 4
@@ -33,13 +33,17 @@ __global__ void matrixMult(Matrix A, Matrix B, Matrix C) {
     for (int t = 0; t < numTiles; t++) {
         int load_a_row = ty * 4 + tx / 4;
         int load_a_col = tx % 4;
-        s_A[load_a_row][load_a_col] = A.data[(blockIdx.y * BM + load_a_row) * A.cols + (t * BK + load_a_col)];
-        s_A[load_a_row][load_a_col + 4] = A.data[(blockIdx.y * BM + load_a_row) * A.cols + (t * BK + load_a_col + 4)];
+        for (int i = 0; i < 4; i++) {
+            int dx = i * 4;
+            s_A[load_a_row][load_a_col + dx] = A.data[(blockIdx.y * BM + load_a_row) * A.cols + (t * BK + load_a_col + dx)];
+        }
 
         int load_b_row = ty / 4;
         int load_b_col = tx * 4 + ty % 4;
-        s_B[load_b_row][load_b_col] = B.data[(t * BK + load_b_row) * B.cols + (blockIdx.x * BN + load_b_col)];
-        s_B[load_b_row + 4][load_b_col] = B.data[(t * BK + load_b_row + 4) * B.cols + (blockIdx.x * BN + load_b_col)];
+        for (int i = 0; i < 4; i++) {
+            int dy = i * 4;
+            s_B[load_b_row + dy][load_b_col] = B.data[(t * BK + load_b_row + dy) * B.cols + (blockIdx.x * BN + load_b_col)];
+        }
 
         __syncthreads();
 
