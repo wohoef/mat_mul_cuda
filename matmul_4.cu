@@ -94,9 +94,8 @@ int main(int argc, char** argv) {
     Matrix h_B = {K, N, new float[K * N]};
     Matrix h_C = {M, N, new float[M * N]};
 
-    for (int i = 0; i < M * K; i++) h_A.data[i] = 1.0f;
-    for (int i = 0; i < K * N; i++) h_B.data[i] = 1.0f;
-
+    for (int i = 0; i < M * K; i++) h_A.data[i] = rand() / (float)RAND_MAX;
+    for (int i = 0; i < K * N; i++) h_B.data[i] = rand() / (float)RAND_MAX;
     // Device matrices
     Matrix d_A = {M, K, nullptr};
     Matrix d_B = {K, N, nullptr};
@@ -136,6 +135,16 @@ int main(int argc, char** argv) {
     float ms = 0;
     cudaEventElapsedTime(&ms, start, stop);
     std::cout << ms << std::endl;
+
+    // Optional: dump A, B and C to a file so test.py can check the result
+    if (argc > 2) {
+        cudaMemcpy(h_C.data, d_C.data, M * N * sizeof(float), cudaMemcpyDeviceToHost);
+        FILE* f = std::fopen(argv[2], "wb");
+        std::fwrite(h_A.data, sizeof(float), M * K, f);
+        std::fwrite(h_B.data, sizeof(float), K * N, f);
+        std::fwrite(h_C.data, sizeof(float), M * N, f);
+        std::fclose(f);
+    }
 
     // Cleanup
     cudaFree(d_A.data);

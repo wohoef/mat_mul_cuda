@@ -49,9 +49,8 @@ int main(int argc, char** argv) {
     // Host matrices
     float* h_A = new float[M * K];
     float* h_B = new float[K * N];
-    for (int i = 0; i < M * K; i++) h_A[i] = 1.0f;
-    for (int i = 0; i < K * N; i++) h_B[i] = 1.0f;
-
+    for (int i = 0; i < M * K; i++) h_A[i] = rand() / (float)RAND_MAX;
+    for (int i = 0; i < K * N; i++) h_B[i] = rand() / (float)RAND_MAX;
     // Device matrices
     float *d_A, *d_B, *d_C;
     cudaMalloc(&d_A, M * K * sizeof(float));
@@ -102,6 +101,18 @@ int main(int argc, char** argv) {
     float ms = 0;
     cudaEventElapsedTime(&ms, start, stop);
     std::cout << ms << std::endl;
+
+    // Optional: dump A, B and C to a file so test.py can check the result
+    if (argc > 2) {
+        float* h_C = new float[M * N];
+        cudaMemcpy(h_C, d_C, M * N * sizeof(float), cudaMemcpyDeviceToHost);
+        FILE* f = std::fopen(argv[2], "wb");
+        std::fwrite(h_A, sizeof(float), M * K, f);
+        std::fwrite(h_B, sizeof(float), K * N, f);
+        std::fwrite(h_C, sizeof(float), M * N, f);
+        std::fclose(f);
+        delete[] h_C;
+    }
 
     // Cleanup
     destroy(handle);
